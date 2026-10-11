@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TSR Exam – How it works (demo)</title>
+<style>
+:root{--pri:#1d4ed8;--bd:#d5dbe7;--ok:#0a7a3d;--bad:#b42318}
+*{box-sizing:border-box}body{margin:0;font:16px/1.5 system-ui,sans-serif;background:#f4f6fa;color:#14213d}
+header{background:#fff;border-bottom:1px solid var(--bd);padding:10px 16px}header b{color:var(--pri)}
+.demo{background:#fff4d6;padding:8px 16px;font-size:.9rem}
+nav{display:flex;gap:6px;padding:10px 16px;flex-wrap:wrap}nav button{padding:8px 14px}
+nav button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+main{max-width:860px;margin:0 auto;padding:0 12px 40px}
+.card{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:16px;margin:10px 0}
+label{display:block;margin:8px 0;font-weight:600}input{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;font:inherit;margin-top:3px}
+button{font:inherit;padding:9px 14px;border-radius:8px;border:1px solid var(--bd);background:#fff;cursor:pointer}
+button.p{background:var(--pri);color:#fff;border-color:var(--pri)}button:disabled{opacity:.5}
+.opt{display:block;width:100%;text-align:left;margin:6px 0}.opt.on{border-color:var(--pri);box-shadow:0 0 0 2px var(--pri) inset}
+table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid var(--bd);text-align:left;font-size:.9rem}
+.cam{height:140px;background:#222;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:10px}
+.st{font-size:.8rem;color:#555}.sent{color:var(--ok)}.q{color:#b26a00}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:12px}
+.modal.show{display:flex}.sheet{background:#fff;max-width:640px;width:100%;max-height:90vh;overflow:auto;padding:20px;border-radius:8px}
+.right{color:var(--ok);font-weight:700}.wrong{color:var(--bad);font-weight:700}
+</style></head><body>
+<header><b>TSR Institute</b> – Online Examination</header>
+<div class="demo">DEMO ONLY: runs in your browser with sample data. No camera, server or real emails are used. The real app is in the ZIP.</div>
+<nav id="nav"></nav>
+<main id="v"></main>
+<div class="modal" id="m"><div class="sheet" id="sheet"></div></div>
+<script>
+const Q=[
+ {t:"Which gas do plants absorb for photosynthesis?",o:["Oxygen","Carbon dioxide","Nitrogen","Hydrogen"],c:1},
+ {t:"What is 12 × 12?",o:["124","132","144","154"],c:2},
+ {t:"Which planet is known as the Red Planet?",o:["Mars","Venus","Jupiter","Saturn"],c:0}];
+const S={step:0,me:{name:'',cls:'',roll:'',email:'',photo:false,ans:[null,null,null],done:false},
+ others:[{name:'Asha Verma',cls:'10-A',roll:'101',email:'asha@example.com',ans:[1,2,0],st:''},
+         {name:'Rohan Mehta',cls:'10-A',roll:'102',email:'rohan@example.com',ans:[0,2,1],st:''}],qi:0};
+const tabs=['1 Student registers','2 Student takes test','3 Teacher: results & PDFs'];
+const $=s=>document.querySelector(s);
+function nav(){$('#nav').innerHTML=tabs.map((t,i)=>`<button class="${i==S.step?'on':''}" onclick="go(${i})">${t}</button>`).join('')}
+function go(i){S.step=i;render()}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function render(){nav();[reg,exam,teacher][S.step]()}
+function reg(){const m=S.me;
+ $('#v').innerHTML=`<div class="card"><h2>Science Quiz</h2><p>Duration 10 min. Fill in your details.</p>
+ <label>Full name<input id="n" value="${esc(m.name)}"></label><label>Class / batch<input id="c" value="${esc(m.cls)}"></label>
+ <label>Roll number<input id="r" value="${esc(m.roll)}"></label>
+ <label>Email address (your response sheet will be sent here)<input id="e" type="email" value="${esc(m.email)}"></label>
+ <div class="cam">${m.photo?'📷 Start photo captured ✓':'Live camera preview (simulated)'}</div>
+ <p><button onclick="shot()">${m.photo?'Retake':'Capture photo'}</button></p>
+ <p><label style="font-weight:400"><input type="checkbox" id="k" style="width:auto"> I accept the photo, monitoring and privacy notice.</label></p>
+ <button class="p" id="go" onclick="start()">Start test</button><p id="err" class="wrong"></p></div>`}
+function rd(){const m=S.me;m.name=$('#n').value;m.cls=$('#c').value;m.roll=$('#r').value;m.email=$('#e').value}
+function shot(){rd();S.me.photo=!S.me.photo||true;reg()}
+function start(){rd();const m=S.me;
+ if(!m.name||!m.cls||!m.roll)return $('#err').textContent='Fill in name, class and roll number';
+ if(!/^\S+@\S+\.\S+$/.test(m.email))return $('#err').textContent='Enter a valid email address';
+ if(!m.photo)return $('#err').textContent='Start button needs a captured photo first';
+ if(!$('#k').checked)return $('#err').textContent='Please accept the notice';
+ S.step=1;S.qi=0;render()}
+function exam(){const m=S.me;if(m.done){return $('#v').innerHTML=`<div class="card"><h2>Submitted ✓</h2><p>Final photo captured. Now switch to tab 3 to see the teacher view.</p></div>`}
+ const q=Q[S.qi];$('#v').innerHTML=`<div class="card"><p class="st">Question ${S.qi+1} / ${Q.length} · Answers autosave</p><h3>${q.t}</h3>
+ ${q.o.map((o,i)=>`<button class="opt ${m.ans[S.qi]===i?'on':''}" onclick="pick(${i})">${'ABCD'[i]}. ${o}</button>`).join('')}
+ <p><button ${S.qi?'':'disabled'} onclick="S.qi--;exam()">Previous</button>
+ ${S.qi<Q.length-1?'<button class="p" onclick="S.qi++;exam()">Next</button>':'<button class="p" onclick="fin()">Submit test</button>'}</p></div>`}
+function pick(i){S.me.ans[S.qi]=i;exam()}
+function fin(){S.me.done=true;exam()}
+function all(){const l=[...S.others.map(o=>({...o,real:false}))];
+ if(S.me.done)l.unshift({name:S.me.name||'You',cls:S.me.cls,roll:S.me.roll,email:S.me.email,ans:S.me.ans,st:S.me.st||'',real:true});return l}
+const score=a=>a.reduce((n,x,i)=>n+(x===Q[i].c?1:0),0);
+function teacher(){const l=all();
+ $('#v').innerHTML=`<div class="card"><h2>Results – Science Quiz</h2>
+ ${S.me.done?'':'<p class="st">Tip: complete tabs 1 and 2 to see your own row appear here.</p>'}
+ <p><button class="p" onclick="sendAll()">Email responses to all students</button></p>
+ <div style="overflow-x:auto"><table><tr><th>Student</th><th>Marks</th><th>Response sheet</th><th>Email status</th></tr>
+ ${l.map((s,i)=>`<tr><td>${esc(s.name)}<div class="st">${esc(s.email)}</div></td><td>${score(s.ans)} / ${Q.length}</td>
+ <td><button onclick="pdf(${i})">View PDF</button> <button onclick="sendOne(${i})">${s.st==='sent'?'Resend':'Email'}</button></td>
+ <td class="${s.st==='sent'?'sent':s.st?'q':''}">${s.st==='sent'?'sent ✓':s.st||'–'}</td></tr>`).join('')}</table></div></div>`}
+function setSt(s,v){s.real?S.me.st=v:S.others.find(o=>o.roll===s.roll).st=v}
+function sendOne(i){const s=all()[i];setSt(s,'queued');teacher();setTimeout(()=>{setSt(s,'sent');if(S.step==2)teacher()},1200)}
+function sendAll(){all().forEach((s,i)=>{if(s.st!=='sent'){setSt(s,'queued');setTimeout(()=>{setSt(s,'sent');if(S.step==2)teacher()},900+i*700)}});teacher()}
+function pdf(i){const s=all()[i];
+ $('#sheet').innerHTML=`<p><button onclick="$('#m').classList.remove('show')">Close</button> <span class="st">Preview of the compressed PDF the teacher downloads / the student receives</span></p>
+ <h3>TSR Institute – Test Response Sheet</h3><p>Science Quiz · ${esc(s.name)} · Class ${esc(s.cls)} · Roll ${esc(s.roll)}<br><b>Marks: ${score(s.ans)} / ${Q.length}</b></p>
+ ${Q.map((q,n)=>`<p><b>Q${n+1}. ${q.t}</b><br>${q.o.map((o,k)=>{const mk=s.ans[n]===k?'[x]':'[ ]';
+  const cls=k===q.c?'right':(s.ans[n]===k?'wrong':'');return `<span class="${cls}">${mk} ${'ABCD'[k]}. ${o}${k===q.c?' (Correct answer)':''}</span><br>`}).join('')}
+  <i class="st">Result: ${s.ans[n]==null?'Unanswered':s.ans[n]===q.c?'Correct':'Wrong'}</i></p>`).join('')}`;
+ $('#m').classList.add('show')}
+$('#m').onclick=e=>{if(e.target.id==='m')e.target.classList.remove('show')};
+render();
+</script></body></html>
